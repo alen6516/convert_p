@@ -15,13 +15,17 @@ def T2S(string):
     return Converter('zh-hans').convert(string)
 
 
-def if_encode_by_GB2312(lines):
-    count = 0
-    for i in range(10):
-        if chardet.detect(lines[i])['encoding'] == 'GB2312':
-            count += 1
-    
-    return True if count >=5 else False
+def get_encode(lines):
+    big5_count = 0
+    gb2312_count = 0
+    for i in range(20):
+        if chardet.detect(lines[i])['encoding'] == 'Big5':
+            big5_count += 1
+        elif chardet.detect(lines[i])['encoding'] == 'GB2312':
+            gb2312_count += 1
+
+    return 'Big5' if big5_count >= gb2312_count else "GB2312"
+
 
 if __name__=='__main__':
     print("***********************************************************")
@@ -37,11 +41,12 @@ if __name__=='__main__':
         lines = fo.readlines()
         fo.close()
 
-        if if_encode_by_GB2312(lines):
-            print("%s is encode by GB2312" % file_name)
-        else:
-            print("%s is not encode by GB2312, ignore" % file_name)
-            continue
+        encode_type = get_encode(lines)
+
+        if encode_type == "GB2312":
+            print("%s is encoded by GB2312" % file_name)
+        elif encode_type == "Big5":
+            print("%s is encoded by Big5" % file_name)
 
         result='result_'+file_name
         
@@ -51,7 +56,7 @@ if __name__=='__main__':
 
         fw=open(result, 'w')
         for line in lines:
-            fw.write(S2T(line.decode('gbk')))
+            fw.write(S2T(line.decode(encode_type, errors="replace")))
         fw.close()
         print("%s done" % file_name)
     print("conversion done")
